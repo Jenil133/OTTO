@@ -88,8 +88,40 @@ ambiguous ask. Swap = one env var (`PLANNER_MODEL`), zero code change.
 **GO only if ALL THREE hold** (ambiguity = NO-GO; fallback = Standing Watch
 as the RocketRide pipeline, Phase 4):
 
-- [ ] JSON schema is clean? · answer: ___
-- [ ] Steps can call an external tool / custom function? · answer: ___
-- [ ] Custom model base URL is configurable (→ Respan gateway)? · answer: ___
+- [x] JSON schema is clean? · answer: **YES.** Export produces a plain
+  `.pipe` / `application/json` file: `{project_id, components: [{id,
+  provider, config, ui, input}, ...]}`. Verified on a real pipeline
+  (`hello-inspect`, built off the "RocketRide Wave Agent" template) — e.g.
+  `{"id":"llm_openai_1","provider":"llm_openai","config":{"profile":
+  "openai-5-2",...}}` and the HTTP tool node's config (allowGET/POST/PUT/
+  PATCH/DELETE, `urlWhitelist: []`, rate limits). Structured, readable, no
+  proprietary opacity.
+- [x] Steps can call an external tool / custom function? · answer: **YES,
+  clearly.** The node palette's TOOL category includes **HTTP Request**
+  (arbitrary external URL, all methods, `urlWhitelist: []` = unrestricted
+  by default), **Python** (custom code), and **MCP Client** — three
+  independent arbitrary-execution paths. Full TOOL list also has Mem0,
+  GitHub, Slack, Google Sheets/Docs/Drive/Calendar, Gmail, Exa/Tavily
+  search, Firecrawl, Git, File System, Apify, Chart.js, and more.
+- [x] Custom model base URL is configurable? · answer: **YES, via one
+  specific node type.** The branded `OpenAI` node is locked (Node Name /
+  preset Model dropdown / API key only — no base URL). The
+  **"OpenAI-Compatible API"** node exposes an explicit **"Base URL \*"**
+  field + free-text Model + Tokens + API key — meaning any OpenAI-
+  compatible gateway (TokenRouter included) can be pointed at from a
+  RocketRide pipeline. Ollama likely implies a custom host too, untested.
 
-**decision: ___ recorded at 9:45**
+**decision: GO — recorded Sat Jul 25, ~12:40.** All three verified with
+concrete evidence (JSON snippet, node list, field name), not guessed.
+
+**Scope decision (not a spec requirement, a judgment call):** the main
+brain (planner → fan-out → synthesizer) is NOT being ported to RocketRide.
+It is already live-verified twice on the deployed Render backend (38/38
+tests, real 3-agent runs, e.g. `req_ffccc683` in 23s) — replacing working,
+tested infrastructure this late for a sponsor integration is exactly the
+kind of scope creep the master plan's cut order warns against. RocketRide's
+GO instead unlocks **Standing Watch (Phase 4-D, currently unbuilt)**: an
+HTTP Request tool step (fetch the watched page) → an OpenAI-Compatible LLM
+step (base URL = TokenRouter, same key already live) that judges "condition
+met?" — the exact shape of the watch-compare prompt already stubbed in
+`backend/prompts/watch-compare.md`. Honest sponsor use: earned, not forced.

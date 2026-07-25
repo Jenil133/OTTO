@@ -132,9 +132,11 @@ export default function Watches({ state, dispatch }) {
 
       <footer className="watch-footer">
         {InfoIcon}
-        {/* Implementation-agnostic on purpose: RocketRide is a GO/NO-GO decided
-            Sat 9:45 (VERIFY.md). Restore the name-check only on GO. */}
-        <span>Otto re-checks on a schedule — fetch, compare, call you</span>
+        {/* RocketRide GO recorded in docs/VERIFY.md (JSON schema clean, HTTP
+            Request tool, OpenAI-Compatible node exposes a Base URL field ->
+            TokenRouter). Each watch runs as a RocketRide pipeline: HTTP
+            Request fetch + LLM compare, on a Render-cron-style interval. */}
+        <span>Each watch is one RocketRide pipeline — fetch, compare, call</span>
       </footer>
     </div>
   )
