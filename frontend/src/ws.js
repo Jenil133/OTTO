@@ -5,11 +5,18 @@
  *   dispatch({ type: 'event', event })
  * Unknown / malformed events are logged, never crash the UI (D4).
  *
- * ?api=<origin> overrides the backend base (default http://localhost:8000).
+ * Backend base resolution order: ?api=<origin> query override, then the
+ * Vite build-time env var VITE_API_BASE (set as a Render Static Site env
+ * var so the deployed frontend finds the deployed backend with no query
+ * param), then localhost for local dev.
  */
 
 export function apiBase() {
-  return new URLSearchParams(window.location.search).get('api') ?? 'http://localhost:8000'
+  return (
+    new URLSearchParams(window.location.search).get('api') ??
+    import.meta.env.VITE_API_BASE ??
+    'http://localhost:8000'
+  )
 }
 
 /**
