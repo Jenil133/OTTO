@@ -68,7 +68,16 @@ ambiguous ask. Swap = one env var (`PLANNER_MODEL`), zero code change.
 
 ### Respan
 
-- [ ] Which providers route through it (Kimi? MiniMax?)? · answer: ___
+- [x] Which providers route through it (Kimi? MiniMax?)? · answer:
+  **UNAVAILABLE — not offered at this event.** Fallback per the phase-2 risk
+  mitigation ("Respan doesn't route a provider → call that provider direct;
+  keep Respan for the rest; partial use is a fine pitch") already the live
+  code path: `kimi.py` checks `RESPAN_BASE_URL` first, falls back to
+  `TOKENROUTER_BASE_URL` direct when unset — exactly what's deployed right
+  now. No code change needed; cost/latency telemetry (the one thing Respan
+  would have added) stays a Phase 4 placeholder either way. Cut cleanly per
+  the master plan's own cut order (Respan is droppable, "internal feed
+  survives").
 
 ### Band
 
