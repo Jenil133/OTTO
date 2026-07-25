@@ -1,0 +1,188 @@
+/* Connect screen — prefix .conn- (Phase 1, static). Scoped keys, quiet cards. */
+
+.conn-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* ---------- header ---------- */
+.conn-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: var(--s1);
+  min-width: 0;
+}
+
+.conn-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.conn-sub {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---------- section labels ---------- */
+.conn-label {
+  letter-spacing: 0.05em;
+  margin-top: var(--s1);
+}
+
+/* ---------- connected: Gmail ---------- */
+.conn-gmail {
+  border-color: var(--accent-line);
+  padding: var(--s3);
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.conn-gmail-icon {
+  color: var(--accent);
+  display: inline-flex;
+  flex: none;
+}
+
+.conn-gmail-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.conn-gmail-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.conn-gmail-check {
+  color: var(--accent);
+  display: inline-flex;
+  flex: none;
+}
+
+.conn-gmail-mail {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-left: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conn-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.conn-scope {
+  font-size: 11px;
+  padding: 2px 9px;
+}
+
+.conn-gmail-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex: none;
+}
+
+.conn-revoke {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.conn-revoke:hover { color: var(--text); opacity: 1; }
+
+/* ---------- available grid ---------- */
+.conn-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+}
+
+.conn-avail {
+  padding: 20px var(--s3) var(--s3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.conn-avail:hover {
+  border-color: var(--accent-line);
+}
+
+.conn-avail-icon {
+  color: var(--muted);
+  display: inline-flex;
+}
+
+.conn-avail-name {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.conn-connect-btn {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 4px 14px;
+  font-size: 12px;
+  color: var(--accent);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.conn-connect-btn:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-dim);
+}
+
+/* ---------- no door ---------- */
+.conn-nodoor {
+  padding: var(--s3);
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.conn-nodoor-icon {
+  color: var(--muted);
+  display: inline-flex;
+  flex: none;
+}
+
+.conn-nodoor-text {
+  font-size: 13px;
+  color: var(--muted);
+  min-width: 0;
+}
+
+/* ---------- footer audit line ---------- */
+.conn-page .conn-audit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--accent);
+  margin-top: var(--s1);
+  padding: 0 2px;
+}
+
+.conn-audit svg { flex: none; }

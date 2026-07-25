@@ -1,0 +1,190 @@
+/* Watches screen — prefix .watch- (Phase 1, static). Flat, quiet, calm. */
+
+.watch-page {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 32px 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+}
+
+/* ---------- header ---------- */
+.watch-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+
+.watch-head-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.watch-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.watch-sub {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.watch-voice-btn {
+  border-radius: var(--radius-pill);
+  padding: 8px 15px;
+  font-size: 12px;
+  flex: none;
+}
+
+/* ---------- watch cards ---------- */
+.watch-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.watch-card {
+  padding: var(--s3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.watch-card-paused {
+  opacity: 0.62;
+}
+
+.watch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.watch-name {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watch-name-muted {
+  color: var(--muted);
+}
+
+.watch-state {
+  font-size: 12px;
+  flex: none;
+}
+
+.watch-state-working { color: var(--working); }
+.watch-state-done    { color: var(--accent); }
+
+/* indent = dot 7px + gap 10px, so lines align under the title */
+.watch-meta {
+  padding-left: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.watch-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  padding-left: 17px;
+}
+
+/* history mini-bars: 7 ticks, 0 = border, 1 = amber */
+.watch-hist {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  flex: none;
+}
+
+.watch-hist i {
+  display: block;
+  width: 6px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.watch-hist i.hit {
+  background: var(--working);
+}
+
+.watch-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  min-width: 0;
+}
+
+.watch-note svg { flex: none; }
+
+/* triggered — accent-dim callout box */
+.watch-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.watch-alert svg { flex: none; }
+
+.watch-viewrun {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  flex: none;
+  padding: 4px 2px;
+  transition: opacity 0.15s ease;
+}
+
+.watch-viewrun:hover { opacity: 0.75; }
+
+/* paused — small ghost resume */
+.watch-resume {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  transition: color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.watch-resume:hover {
+  color: var(--text);
+  opacity: 1;
+}
+
+/* ---------- footer ---------- */
+.watch-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 2px;
+}
+
+.watch-footer svg { flex: none; }

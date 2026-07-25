@@ -1,0 +1,71 @@
+.navrail {
+  width: 176px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  padding: var(--s3) var(--s2);
+  gap: var(--s3);
+}
+
+.navrail-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+}
+
+.navrail-orb {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.navrail-name {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+.navrail-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--s1);
+}
+
+.navrail-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-card);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  transition: color .12s ease, background .12s ease;
+}
+.navrail-item:hover { color: var(--text); }
+.navrail-item.active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.navrail-foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.navrail-demo-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--border);
+  flex: none;
+}

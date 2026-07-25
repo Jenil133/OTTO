@@ -1,0 +1,234 @@
+/* Ask-live screen (otto.run/live) — prefix .live-
+   Flat, calm, one accent. Reuses .card .pill .dot .bar .skel .mono from index.css. */
+
+.live-root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: var(--s3);
+  gap: var(--s2);
+}
+
+/* ---------- empty state ---------- */
+.live-empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: live-fade .3s ease;
+}
+.live-empty-title { color: var(--muted); font-size: 13px; }
+
+/* ---------- top bar ---------- */
+.live-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+}
+.live-brand { display: flex; align-items: center; gap: 10px; }
+.live-wordmark { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+
+/* ---------- 3-column grid ---------- */
+.live-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr) 250px;
+  gap: var(--s2);
+}
+.live-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  min-height: 0;
+}
+
+/* ---------- left: transcript + orb ---------- */
+.live-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  overflow-y: auto;
+  min-height: 0;
+}
+.live-bubble {
+  border-radius: var(--radius-card);
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  animation: live-fade .3s ease;
+}
+.live-bubble-user { background: var(--canvas); border: 1px solid var(--border); }
+.live-bubble-otto { background: var(--accent-dim); border: 1px solid var(--accent-line); }
+.live-orbzone {
+  margin-top: auto;
+  padding: var(--s3) 0 var(--s1);
+  display: flex;
+  justify-content: center;
+}
+
+/* typed fallback — quiet pill at the bottom of the transcript column */
+.live-input {
+  width: 100%;
+  flex: none;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--canvas);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 7px 14px;
+  outline: none;
+  transition: border-color .2s ease;
+}
+.live-input::placeholder { color: var(--muted); }
+.live-input:focus { border-color: var(--accent-line); }
+
+/* ---------- center: agent panes ---------- */
+.live-agents { overflow-y: auto; }
+
+.live-pane {
+  padding: var(--s2);
+  flex: none;
+  animation: live-fade .3s ease;
+}
+.live-pane-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.live-pane-name { font-size: 13px; font-weight: 600; }
+.live-pane-target {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-pane-timer { margin-left: auto; flex: none; }
+.live-pane-done {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 500;
+  animation: live-fade .3s ease;
+}
+.live-pane-body {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+}
+.live-stepline {
+  border: 1px solid var(--accent-line);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  animation: live-fade .25s ease;
+}
+.live-pane-line { font-size: 13px; }
+.live-pane-note { font-size: 12px; color: var(--accent); }
+.live-pane-fail { font-size: 12px; color: var(--failed); }
+.live-shot {
+  display: block;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  margin-top: var(--s1);
+  animation: live-fade .3s ease;
+}
+.live-pane-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.live-pane-foot .bar { flex: 1; }
+.live-pane-foot .mono { flex: none; }
+
+/* ---------- right rail ---------- */
+.live-rail-card { padding: var(--s2); flex: none; }
+.live-card-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* band feed — grows to fill the rail, autoscrolls */
+.live-feed {
+  flex: 1;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+.live-feed-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.live-feed-line {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+  word-break: break-word;
+  animation: live-fade .25s ease;
+}
+.live-feed-actor { color: var(--accent); }
+
+/* otto knows */
+.live-knows { display: flex; flex-wrap: wrap; gap: 6px; }
+.live-know { animation: live-fade .3s ease; }
+.live-know-x {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  color: var(--muted);
+  transition: color .15s ease;
+}
+.live-know-x:hover { color: var(--failed); }
+.live-empty-note { font-size: 12px; color: var(--muted); }
+
+/* budget */
+.live-budget-nums {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: var(--s1);
+}
+.live-budget-used { font-size: 18px; font-weight: 600; }
+.live-budget-cap { font-size: 12px; color: var(--muted); }
+
+/* ---------- footer status line ---------- */
+.live-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2);
+  min-height: 18px;
+}
+.live-footer-left {
+  font-size: 13px;
+  color: var(--text);
+  animation: live-fade .3s ease;
+}
+.live-footer-right {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+}
+
+@keyframes live-fade {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
