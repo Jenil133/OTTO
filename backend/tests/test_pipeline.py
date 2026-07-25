@@ -219,3 +219,86 @@ async def test_unexpected_crash_yields_honest_failed_result(
     assert tasks["req_t6"]["result"] == payload
     # The error also hit the feed rail — nothing dies silently.
     assert any("error" in p["text"] for p in emit.of("band_msg"))
+
+
+# ---------------------------------------------------------------------------
+# Fan-out — every plan subtask runs concurrently (Phase 3-A)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_fanout_three_agents() -> None:
+    """A 3-site ask dispatches 3 agents concurrently, each on its own
+    subtask_id, and the synthesizer merges rows from all three."""
+    emit = Collector()
+    tasks: Dict[str, Any] = {}
+    await pipeline.run_pipeline(
+        "req_fan1",
+        "Find new-grad SDE roles at Stripe, Anthropic, Databricks",
+        tasks,
+        emit,
+    )
+
+    plan = emit.of("plan")[0]
+    assert len(plan["subtasks"]) == 3
+    subtask_ids = {st["id"] for st in plan["subtasks"]}
+
+    # Interleaved progress across all three distinct subtask_ids — not just
+    # the first one (the Phase-2 bug this fixes).
+    working = [p for p in emit.of("agent_update") if p["status"] == "working"]
+    working_ids = {p["subtask_id"] for p in working}
+    assert working_ids == subtask_ids
+
+    done = [p for p in emit.of("agent_update") if p["status"] == "done"]
+    assert {p["subtask_id"] for p in done} == subtask_ids
+    assert len(done) == 3
+
+    # band_msg addresses each agent by its own short actor id.
+    band_actors = {p["actor"] for p in emit.of("band_msg")}
+    assert {"ag01", "ag02", "ag03"} <= band_actors
+
+    result = emit.of("result")[0]
+    assert result["agents"] == 3
+    ResultPayload.model_validate(result)
+    # Rows merged from all three mock flavors (stripe 3 + anthropic 5 +
+    # databricks — adapters/retriever.py mock flavoring).
+    assert len(result["card"]["rows"]) >= 3 + 5
+
+    telemetry = emit.of("telemetry")
+    if telemetry:  # ticker may not fire within a near-instant mock run
+        assert telemetry[0]["agents"] == 3
+
+
+@pytest.mark.asyncio
+async def test_fanout_one_agent_failure(monkeypatch: pytest.MonkeyPatch) -> None:
+    """One agent raising unexpectedly does not cancel its siblings (D7):
+    the run still completes, that agent gets a failed final agent_update,
+    and the synthesizer merges the rest into a partial result."""
+    real_adapter = RetrieverAdapter(mock_step_delay=0)
+
+    class FlakyRetriever:
+        async def run_subtask(self, subtask: Any, on_step: Any = None) -> Any:
+            if "anthropic" in subtask.target:
+                raise RuntimeError("simulated retriever crash")
+            return await real_adapter.run_subtask(subtask, on_step)
+
+    monkeypatch.setattr(pipeline, "RetrieverAdapter", lambda: FlakyRetriever())
+
+    emit = Collector()
+    tasks: Dict[str, Any] = {}
+    await pipeline.run_pipeline(
+        "req_fan2",
+        "Find new-grad SDE roles at Stripe, Anthropic, Databricks",
+        tasks,
+        emit,
+    )
+
+    done_updates = [p for p in emit.of("agent_update") if p["status"] == "done"]
+    failed_updates = [p for p in emit.of("agent_update") if p["status"] == "failed"]
+    assert len(done_updates) == 2  # stripe + databricks
+    assert len(failed_updates) == 1  # anthropic — crashed, never cancelled a sibling
+
+    result = emit.of("result")[0]
+    assert result["status"] == "partial"
+    ResultPayload.model_validate(result)
+    assert tasks["req_fan2"]["status"] == "done"  # the RUN completed honestly

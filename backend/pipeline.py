@@ -9,9 +9,9 @@ Every stage emits through the ONE envelope helper (`main.emit`,
 CONTRACTS.md §1) and posts a lifecycle line to the otto-ops Band feed
 (phase-2 Task F hook), mirrored as a `band_msg` event.
 
-Phase 2 scope: exactly ONE agent runs (`plan.subtasks[0]`); parallel
-fan-out is Phase 3. Telemetry ticks every ~5s with a placeholder cost —
-real cost lands Phase 4 via Respan.
+Phase 3-A: every plan subtask (1-3) runs CONCURRENTLY (asyncio.gather) — the
+never-cut fan-out visual (README-master-plan.md). Telemetry ticks every ~5s
+with a placeholder cost — real cost lands Phase 4 via Respan.
 
 Failure policy (architecture D7): `run_pipeline` NEVER raises and never
 dies silently. The planner's Clarification comes back as an honest
@@ -149,9 +149,11 @@ async def run_pipeline(
         )
         await _band(band, emit, "plan", f"plan ok · {len(plan.subtasks)} subtasks")
 
-        # -- e. ONE agent (Phase 2 scope; fan-out is Phase 3) ----------------
-        subtask = plan.subtasks[0]
-        await _band(band, emit, "plan", f"dispatch ag01 → {subtask.target}")
+        # -- e. FAN-OUT: every subtask, concurrently (Phase 3-A) -------------
+        # subtask index -> short actor id, ag01/ag02/ag03 (zero-padded, 1-based)
+        actor_ids = [f"ag{i:02d}" for i in range(1, len(plan.subtasks) + 1)]
+        for actor, subtask in zip(actor_ids, plan.subtasks):
+            await _band(band, emit, actor, f"dispatch {actor} → {subtask.target}")
 
         async def _telemetry_ticker() -> None:
             """Emit §1 `telemetry` every ~5s until the run ends.
@@ -167,83 +169,117 @@ async def run_pipeline(
                     {
                         "cost_usd": round(0.01 + 0.002 * elapsed, 3),
                         "elapsed_s": int(elapsed),
-                        "agents": 1,
+                        "agents": len(plan.subtasks),
                         "gateway": "respan",
                     },
                 )
 
         ticker = asyncio.create_task(_telemetry_ticker())
 
-        async def on_step(step: int, line: str, elapsed_s: float) -> None:
-            """Retriever progress -> §1 `agent_update` (status working)."""
-            await emit(
-                "agent_update",
-                {
-                    "subtask_id": subtask.id,
-                    "status": "working",
-                    "step": step,
-                    "steps_total": subtask.steps_total,
-                    "line": line,
-                    "elapsed_s": elapsed_s,
-                },
-            )
+        def _make_on_step(subtask_id: str) -> Callable[[int, str, float], Awaitable[None]]:
+            """Bind subtask_id by value (not closure-over-loop-var) so each
+            agent's progress lands on ITS OWN pane, never the last one's."""
 
-        result = await RetrieverAdapter().run_subtask(subtask, on_step)
+            async def on_step(step: int, line: str, elapsed_s: float) -> None:
+                await emit(
+                    "agent_update",
+                    {
+                        "subtask_id": subtask_id,
+                        "status": "working",
+                        "step": step,
+                        "steps_total": next(
+                            st.steps_total
+                            for st in plan.subtasks
+                            if st.id == subtask_id
+                        ),
+                        "line": line,
+                        "elapsed_s": elapsed_s,
+                    },
+                )
 
-        # Final agent_update: "ok" -> done, anything else -> failed
-        # (§1 agent_update status has no "partial").
-        roles = result.data.get("roles")
-        if not isinstance(roles, list):
-            roles = None
-        if roles is not None:
-            newgrad = sum(
-                1
-                for r in roles
-                if isinstance(r, dict) and r.get("fit") == "new-grad"
+            return on_step
+
+        async def _run_one(actor: str, subtask) -> Any:
+            """Run one subtask; an unexpected exception here becomes a
+            well-formed failed AgentResult, never a crashed sibling (D7) —
+            asyncio.gather(..., return_exceptions=False) is safe BECAUSE this
+            function itself never raises."""
+            from schemas import AgentResult  # local import avoids a cycle
+
+            try:
+                return await RetrieverAdapter().run_subtask(
+                    subtask, _make_on_step(subtask.id)
+                )
+            except Exception as exc:  # pragma: no cover - defensive, D7
+                return AgentResult(
+                    subtask_id=subtask.id,
+                    status="failed",
+                    data={},
+                    screenshot_ref=None,
+                    steps_log=[f"unexpected error: {type(exc).__name__}: {exc}"],
+                    elapsed_s=round(time.monotonic() - t0, 1),
+                )
+
+        results = await asyncio.gather(
+            *(
+                _run_one(actor, subtask)
+                for actor, subtask in zip(actor_ids, plan.subtasks)
             )
-            line = f"{len(roles)} roles extracted · {result.elapsed_s}s"
-        else:
-            newgrad = 0
-            line = f"no data extracted · {result.elapsed_s}s"
-        final_update: Dict[str, Any] = {
-            "subtask_id": subtask.id,
-            "status": "done" if result.status == "ok" else "failed",
-            "step": subtask.steps_total,
-            "steps_total": subtask.steps_total,
-            "line": line,
-            "elapsed_s": result.elapsed_s,
-        }
-        if roles is not None and result.status == "ok":
-            # summary_lines only on a "done" agent (CONTRACTS.md §1).
-            final_update["summary_lines"] = {
-                "roles": len(roles),
-                "newgrad": newgrad,
-                "note": f"{newgrad} flagged new-grad friendly",
+        )
+
+        # Final agent_update per agent: "ok" -> done, anything else -> failed
+        # (§1 agent_update status has no "partial"). Then the screenshot
+        # fallback visual + a band line, each addressed by its OWN actor id.
+        for actor, subtask, result in zip(actor_ids, plan.subtasks, results):
+            roles = result.data.get("roles")
+            if not isinstance(roles, list):
+                roles = None
+            if roles is not None:
+                newgrad = sum(
+                    1
+                    for r in roles
+                    if isinstance(r, dict) and r.get("fit") == "new-grad"
+                )
+                line = f"{len(roles)} roles extracted · {result.elapsed_s}s"
+            else:
+                newgrad = 0
+                line = f"no data extracted · {result.elapsed_s}s"
+            final_update: Dict[str, Any] = {
+                "subtask_id": subtask.id,
+                "status": "done" if result.status == "ok" else "failed",
+                "step": subtask.steps_total,
+                "steps_total": subtask.steps_total,
+                "line": line,
+                "elapsed_s": result.elapsed_s,
             }
-        await emit("agent_update", final_update)
+            if roles is not None and result.status == "ok":
+                # summary_lines only on a "done" agent (CONTRACTS.md §1).
+                final_update["summary_lines"] = {
+                    "roles": len(roles),
+                    "newgrad": newgrad,
+                    "note": f"{newgrad} flagged new-grad friendly",
+                }
+            await emit("agent_update", final_update)
 
-        # Screenshot fallback visual (§1 agent_screenshot) — live retriever
-        # collects a ref on timeout/partial; surface it to the pane rail.
-        if result.screenshot_ref:
-            await emit(
-                "agent_screenshot",
-                {"subtask_id": subtask.id, "ref": result.screenshot_ref},
-            )
-        await _band(band, emit, "ag01", f"{result.status} · {result.elapsed_s}s")
+            # Screenshot fallback visual (§1 agent_screenshot) — live
+            # retriever collects a ref on timeout/partial.
+            if result.screenshot_ref:
+                await emit(
+                    "agent_screenshot",
+                    {"subtask_id": subtask.id, "ref": result.screenshot_ref},
+                )
+            await _band(band, emit, actor, f"{result.status} · {result.elapsed_s}s")
 
         # -- f. synthesize (MiniMax M3, phase-2 Task C) ----------------------
-        # Tell the synthesizer about the subtasks we actually DISPATCHED, not
-        # the whole plan. Phase 2 runs one agent by design (fan-out is Phase 3),
-        # so passing all 3 makes the model honestly-but-wrongly report the two
-        # undispatched sites as failures ("Anthropic didn't come back").
-        # Phase 3 dispatches every subtask and this trims to a no-op.
-        dispatched_plan = plan.model_copy(update={"subtasks": [subtask]})
+        # Every DISPATCHED subtask is passed now — all of them were, so the
+        # Phase-2 "only tell it about what ran" trim is a no-op here, kept
+        # for symmetry with a future partial-dispatch scenario.
         await _band(band, emit, "synth", "synthesizing → minimax-m3")
         final = await MinimaxAdapter().synthesize(
             request_id,
             text,
-            dispatched_plan,
-            [result],
+            plan,
+            list(results),
             elapsed_s=round(time.monotonic() - t0, 1),
         )
 

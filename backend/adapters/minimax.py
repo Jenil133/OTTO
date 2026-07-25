@@ -232,9 +232,13 @@ class MinimaxAdapter(BaseAdapter):
 
     @staticmethod
     def _strip_fences(text: str) -> str:
-        """Tolerate a model that wraps its strict JSON in ``` fences and/or a
-        leading reasoning block. CONFIRMED live: MiniMax M3 via TokenRouter
-        prepends an un-fenced ``<think>...</think>`` block before the JSON."""
+        """Tolerate a model that wraps its strict JSON in ``` fences, a
+        leading reasoning block, and/or TRAILING prose after the object.
+        CONFIRMED live: MiniMax M3 via TokenRouter prepends an un-fenced
+        ``<think>...</think>`` block, and occasionally appends trailing text
+        after a perfectly valid JSON object (e.g. a follow-up sentence) —
+        that trailing text can itself start with ``{``-like punctuation, so
+        a plain ``startswith("{")`` check is not enough to skip extraction."""
         t = text.strip()
         if "<think>" in t and "</think>" in t:
             t = t.split("</think>", 1)[1].strip()
@@ -244,11 +248,20 @@ class MinimaxAdapter(BaseAdapter):
             if t.endswith("```"):
                 t = t[:-3]
         t = t.strip()
-        # Last resort: grab the outermost {...} in case any prose survives.
-        if t and not t.startswith("{"):
-            start, end = t.find("{"), t.rfind("}")
-            if start != -1 and end > start:
-                t = t[start : end + 1]
+        # Always extract the first BALANCED {...} object — handles both
+        # leading prose and trailing prose, and ignores stray braces that
+        # might appear in text after the real object closes.
+        start = t.find("{")
+        if start != -1:
+            depth = 0
+            for i in range(start, len(t)):
+                if t[i] == "{":
+                    depth += 1
+                elif t[i] == "}":
+                    depth -= 1
+                    if depth == 0:
+                        t = t[start : i + 1]
+                        break
         return t.strip()
 
     # ------------------------------------------------------------------
